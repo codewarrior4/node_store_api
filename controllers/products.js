@@ -9,7 +9,7 @@ const getAllProductsStatic = async(req, res) =>{
 }
 
 const getAllProducts = async(req, res) =>{
-    const {featured,company,name} = req.query
+    const {featured,company,name,sort} = req.query
     const queryObject = {}
     if(featured){
         queryObject.featured = featured === 'true' ? true : false
@@ -18,13 +18,29 @@ const getAllProducts = async(req, res) =>{
         queryObject.company = company
     }
     if(name){
-        queryObject.name = {$regex: name, $options: 'i'}
+        queryObject.name = name
     }
-    const products = await Products.find(queryObject)
+    let results = Products.find(queryObject)
+    let sortList = '';
+    if(sort){
+        const sortList = sort.split(',').join(' ')
+        results = results.sort(sortList)
+        console.log(sortList);
+
+    }else{
+        results =results.sort('createdAt')
+    }
+    const products = await results.select('name price')
     res.status(200).json({success:true,products,count:products.length})
+}
+
+const getProductSort = async(req, res) =>{
+    const products = await Products.find({}).sort('price -name')
+    res.status(200).json({success:true,products})
 }
 
 module.exports = {
     getAllProducts,
-    getAllProductsStatic
+    getAllProductsStatic,
+    getProductSort
 }
